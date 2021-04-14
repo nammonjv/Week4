@@ -317,6 +317,7 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 uint32_t Getdata[2] = {0};
 uint32_t timer = 0;
+uint32_t timer2 = 0;
 uint32_t ref = 0;
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
@@ -328,6 +329,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 		//HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
 		HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
 		ref = 1000+((22695477*Getdata[0])+Getdata[1])%10000;
+		if (timer - timer2 >= ref){}
 
 	}
 	}
