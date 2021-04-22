@@ -48,10 +48,11 @@ UART_HandleTypeDef huart2;
 /* USER CODE BEGIN PV */
 
 uint32_t ADCData[4] = {0};
-uint32_t RandomTime = 0;
+uint32_t GetData[2] = {0};
+uint32_t ref = 0;
 uint32_t TimeStamp = 0;
-uint32_t ReleaseTime = 0;
-uint32_t count = 0;
+uint32_t push = 0;
+uint32_t mode = 0;
 
 /* USER CODE END PV */
 
@@ -109,17 +110,19 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  GetData[1] = ADCData[1];
+	  GetData[0] = ADCData[0];
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
 
-	  if(count == 1)
+	  if(mode == 1)
 	  {
-		  if(HAL_GetTick() - TimeStamp >= RandomTime)
+		  if(HAL_GetTick() - TimeStamp >= ref)
 		  {
-			  HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);							// �?�?ติด�?า�?�?ารสุ�?มเวลา
+			  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
 			  TimeStamp = HAL_GetTick();
-			  count = 2;
+			  mode = 2;
 		  }
 	  }
   }
@@ -309,11 +312,11 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : B1_Pin */
   GPIO_InitStruct.Pin = B1_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
 
@@ -335,23 +338,23 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
 	if(GPIO_Pin == GPIO_PIN_13)
 	{
-		if(count == 0)
+		if(mode == 0)
 		{
-			RandomTime = (1000 + ((22695477 * ADCData[0]) + ADCData[1]) % 10000);		// สุ�?ม�?ำห�?ดระยะเวลาที�?�?�?�?ะ�?ลั�?มาติด
-			HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);									// �?�?ดั�?หลั�?�?า�?�?ด�?ุ�?ม
+			ref = (1000 + ((22695477 * GetData[0]) + GetData[1]) % 10000);
+			HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
 			TimeStamp = HAL_GetTick();
-			ReleaseTime = 0;
-			count = 1;
+			push = 0;
+			mode = 1;
 		}
-		else if(count == 2)
+		else if(mode == 2)
 		{
-			ReleaseTime = HAL_GetTick() - TimeStamp;									// ระยะเวลาที�?�?�?�? = เวลาตอ�?�?ล�?อย - เวลาตอ�?�?ร�?ระยะสุ�?ม
-			count = 0;
+			push = HAL_GetTick() - TimeStamp;
+			mode = 0;
 		}
-		else if(count == 1)																// �?รณี�?ล�?อย�?�?อ�?�?�?ติด�?ห�?�?ลั�?�?�?�?ั�?�?หม�?+�?�?ติดเหมือ�?เดิม
+		else if(mode == 1)
 		{
-			HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
-			count = 0;
+			HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
+			mode = 0;
 		}
 
 	}
